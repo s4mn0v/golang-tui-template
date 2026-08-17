@@ -1,0 +1,35 @@
+package ui
+
+import "github.com/charmbracelet/bubbles/key"
+
+// KeyMap agrupa los bindings globales — los que el Model raíz
+// intercepta antes de delegar al panel con foco. Cuando conectemos
+// el generador, esta struct se arma dinámicamente desde los nodos
+// tipo Trigger del schema; por ahora está a mano con 3 bindings
+// para validar el esqueleto de orquestación.
+type KeyMap struct {
+	NextPanel key.Binding
+	PrevPanel key.Binding
+	Quit      key.Binding
+}
+
+var Keys = KeyMap{
+	NextPanel: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "siguiente panel"),
+	),
+	PrevPanel: key.NewBinding(
+		key.WithKeys("shift+tab"),
+		key.WithHelp("shift+tab", "panel anterior"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q", "ctrl+c"),
+		key.WithHelp("q", "salir"),
+	),
+}
+
+// ShortHelp es lo que renderiza la commandbar inferior — la lista
+// de comandos "de guía" que pediste, siempre visible.
+func (k KeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.NextPanel, k.PrevPanel, k.Quit}
+}
