@@ -42,15 +42,15 @@ func (p *TablePanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 
 func (p *TablePanel) View() string {
 	return borderStyleFor(p.focused).
-		Width(max(0, p.width-2)).
-		Height(max(0, p.height-2)).
+		Width(OuterStyleWidth(p.width)).
+		Height(OuterStyleHeight(p.height)).
 		Render(p.model.View())
 }
 
 func (p *TablePanel) SetSize(w, h int) {
 	p.width, p.height = w, h
-	p.model.SetWidth(max(0, w-2))
-	p.model.SetHeight(max(0, h-2))
+	p.model.SetWidth(ContentWidth(w))
+	p.model.SetHeight(ContentHeight(h))
 }
 
 func (p *TablePanel) Focus() {

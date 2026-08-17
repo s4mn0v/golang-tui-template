@@ -7,20 +7,26 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"tui-template/internal/ui/modals"
 	"tui-template/internal/ui/panels"
 )
 
 // Model es la raíz de la app. No conoce tipos concretos de panel —
 // solo la interface panels.Panel — así el patrón compuesto funciona:
 // cada panel maneja su propio Update(), y este Model solo intercepta
-// las teclas globales (cambiar foco, salir) antes de delegar el resto
-// al panel que tiene el foco actualmente.
+// las teclas globales (cambiar foco, salir, abrir modal) antes de
+// delegar el resto al panel que tiene el foco actualmente.
 type Model struct {
 	panelList    []panels.Panel
 	focusedIndex int
 	width        int
 	height       int
 	arrangement  Arrangement
+
+	// activeModal es nil cuando no hay overlay abierto. Mientras no
+	// sea nil, TODOS los mensajes van al modal — el body queda
+	// congelado detrás hasta que el usuario responda o cancele.
+	activeModal modals.Modal
 }
 
 // NewModel arma el esqueleto de prueba con 3 paneles: list (sidebar),
@@ -62,24 +68,43 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
+	// tea.WindowSizeMsg se procesa siempre, incluso con un modal
+	// activo, para que el layout de fondo no quede desactualizado.
+	if sizeMsg, ok := msg.(tea.WindowSizeMsg); ok {
+		m.width = sizeMsg.Width
+		m.height = sizeMsg.Height
 		m.applyLayout()
 		return m, nil
+	}
 
-	case tea.KeyMsg:
-		// Teclas globales primero — nunca llegan al panel con foco.
+	// Si el resultado de un Confirm llega y ya no hay modal activo
+	// (se cerró en el ciclo anterior), decidimos qué hacer con la
+	// respuesta acá — este es el punto donde, en la app real, se
+	// llamaría al stub correspondiente (ej. eliminar el equipo).
+	if result, ok := msg.(modals.ConfirmResultMsg); ok {
+		return m.handleConfirmResult(result)
+	}
+
+	// Con un modal activo, TODO lo demás se le delega a él — el
+	// resto del árbol (paneles, teclas globales) queda pausado.
+	if m.activeModal != nil {
+		return m.updateModal(msg)
+	}
+
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch {
-		case key.Matches(msg, Keys.Quit):
+		case key.Matches(keyMsg, Keys.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, Keys.NextPanel):
+		case key.Matches(keyMsg, Keys.NextPanel):
 			m.cycleFocus(1)
 			return m, nil
-		case key.Matches(msg, Keys.PrevPanel):
+		case key.Matches(keyMsg, Keys.PrevPanel):
 			m.cycleFocus(-1)
 			return m, nil
+		case key.Matches(keyMsg, Keys.OpenConfirmDemo):
+			return m.openConfirmDemo()
+		case key.Matches(keyMsg, Keys.OpenAlertDemo):
+			return m.openAlertDemo()
 		}
 	}
 
@@ -91,6 +116,60 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+// updateModal envía el mensaje al modal activo y lo cierra si ya
+// terminó su ciclo (Done() == true).
+func (m Model) updateModal(msg tea.Msg) (tea.Model, tea.Cmd) {
+	updated, cmd := m.activeModal.Update(msg)
+	m.activeModal = updated
+
+	if m.activeModal.Done() {
+		m.activeModal = nil
+	}
+
+	return m, cmd
+}
+
+// openConfirmDemo simula la acción "action:openModal" de un Trigger
+// del schema (tecla "d" → abrir Confirm de eliminación).
+func (m Model) openConfirmDemo() (tea.Model, tea.Cmd) {
+	confirm := modals.NewConfirm(
+		"Confirmar acción",
+		"¿Deseas eliminar el equipo seleccionado?",
+		"Eliminar",
+		"Cancelar",
+	)
+	m.activeModal = confirm
+	return m, confirm.Init()
+}
+
+func (m Model) openAlertDemo() (tea.Model, tea.Cmd) {
+	alert := modals.NewAlert(
+		"Información",
+		"Este es un alert de ejemplo — variante info.",
+		modals.AlertInfo,
+	)
+	m.activeModal = alert
+	return m, alert.Init()
+}
+
+// handleConfirmResult es el punto de integración con internal/stubs
+// en la versión final: si Confirmed == true, aquí se llamaría al
+// CallStub real (ej. stubs.DeleteEquipo(id)) en vez de solo abrir
+// un alert de éxito como en este demo.
+func (m Model) handleConfirmResult(result modals.ConfirmResultMsg) (tea.Model, tea.Cmd) {
+	if !result.Confirmed {
+		return m, nil
+	}
+
+	alert := modals.NewAlert(
+		"Éxito",
+		"El equipo fue eliminado (demo — sin lógica real todavía).",
+		modals.AlertSuccess,
+	)
+	m.activeModal = alert
+	return m, alert.Init()
 }
 
 func (m *Model) cycleFocus(direction int) {
@@ -144,6 +223,19 @@ func (m *Model) applyLayout() {
 func (m Model) View() string {
 	if len(m.panelList) < 3 {
 		return "cargando..."
+	}
+
+	// Con un modal activo, reemplazamos toda la pantalla por el
+	// overlay centrado. No es una composición real (el body de
+	// atrás no se ve "a través" del modal) — para un overlay que
+	// sí funda el fondo semitransparente hace falta compositing
+	// manual carácter por carácter, fuera de alcance de este paso.
+	if m.activeModal != nil {
+		return lipgloss.Place(
+			m.width, m.height,
+			lipgloss.Center, lipgloss.Center,
+			m.activeModal.View(),
+		)
 	}
 
 	var body string

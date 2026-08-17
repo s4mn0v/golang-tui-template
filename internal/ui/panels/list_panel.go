@@ -26,7 +26,15 @@ func NewListPanel() Panel {
 		listItem("equipo-bomba-b"),
 		listItem("equipo-motor-c"),
 	}
+
 	delegate := list.NewDefaultDelegate()
+	// Sin esto, DefaultDelegate reserva una línea para descripción
+	// (aunque esté vacía) + 1 línea de espaciado entre ítems — con
+	// listItem.Description() = "" eso se traduce en huecos grandes
+	// entre cada fila sin ningún contenido real ahí.
+	delegate.ShowDescription = false
+	delegate.SetSpacing(0)
+
 	m := list.New(items, delegate, 0, 0)
 	m.Title = "Sidebar"
 	m.SetShowStatusBar(false)
@@ -45,15 +53,14 @@ func (p *ListPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 
 func (p *ListPanel) View() string {
 	return borderStyleFor(p.focused).
-		Width(max(0, p.width-2)).
-		Height(max(0, p.height-2)).
+		Width(OuterStyleWidth(p.width)).
+		Height(OuterStyleHeight(p.height)).
 		Render(p.model.View())
 }
 
 func (p *ListPanel) SetSize(w, h int) {
 	p.width, p.height = w, h
-	// -2 en cada eje para descontar el borde que agrega el estilo.
-	p.model.SetSize(max(0, w-2), max(0, h-2))
+	p.model.SetSize(ContentWidth(w), ContentHeight(h))
 }
 
 func (p *ListPanel) Focus()          { p.focused = true }
