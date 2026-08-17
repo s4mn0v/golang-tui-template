@@ -51,6 +51,13 @@ func (p *ListPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 	return p, cmd
 }
 
+// func (p *ListPanel) View() string {
+// 	return borderStyleFor(p.focused).
+// 		Width(OuterStyleWidth(p.width)).
+// 		Height(OuterStyleHeight(p.height)).
+// 		Render(p.model.View())
+// }
+
 func (p *ListPanel) View() string {
 	return borderStyleFor(p.focused).
 		Width(OuterStyleWidth(p.width)).
@@ -59,8 +66,15 @@ func (p *ListPanel) View() string {
 }
 
 func (p *ListPanel) SetSize(w, h int) {
-	p.width, p.height = w, h
-	p.model.SetSize(ContentWidth(w), ContentHeight(h))
+	topOffset := h / 1050
+
+	p.width = w
+	p.height = h - topOffset
+
+	p.model.SetSize(
+		ContentWidth(w),
+		ContentHeight(p.height),
+	)
 }
 
 func (p *ListPanel) Focus()          { p.focused = true }

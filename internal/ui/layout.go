@@ -18,6 +18,7 @@ const (
 	sidebarMinWidth  = 20
 	sidebarFixedWide = 32
 	statusHeight     = 1
+	commandBarHeight = 1
 )
 
 // Arrangement indica cómo se combinan sidebar+main en View().
@@ -41,7 +42,7 @@ type LayoutResult struct {
 }
 
 func computeLayout(width, height int) LayoutResult {
-	bodyHeight := height - statusHeight
+	bodyHeight := height - statusHeight - commandBarHeight
 	if bodyHeight < 0 {
 		bodyHeight = 0
 	}

@@ -225,11 +225,6 @@ func (m Model) View() string {
 		return "cargando..."
 	}
 
-	// Con un modal activo, reemplazamos toda la pantalla por el
-	// overlay centrado. No es una composición real (el body de
-	// atrás no se ve "a través" del modal) — para un overlay que
-	// sí funda el fondo semitransparente hace falta compositing
-	// manual carácter por carácter, fuera de alcance de este paso.
 	if m.activeModal != nil {
 		return lipgloss.Place(
 			m.width, m.height,
@@ -239,19 +234,23 @@ func (m Model) View() string {
 	}
 
 	var body string
+
 	if m.arrangement == ArrangeStacked {
-		body = lipgloss.JoinVertical(lipgloss.Left,
+		body = lipgloss.JoinVertical(
+			lipgloss.Left,
 			m.panelList[0].View(),
 			m.panelList[1].View(),
 		)
 	} else {
-		body = lipgloss.JoinHorizontal(lipgloss.Top,
+		body = lipgloss.JoinHorizontal(
+			lipgloss.Top,
 			m.panelList[0].View(),
 			m.panelList[1].View(),
 		)
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left,
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
 		body,
 		m.panelList[2].View(),
 		m.renderCommandBar(),
