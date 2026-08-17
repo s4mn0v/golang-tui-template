@@ -5,10 +5,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// ConfirmResultMsg se emite cuando el usuario responde. El Model raíz
-// la recibe en el siguiente ciclo de Update() — para ese momento el
-// modal ya se cerró — y decide qué hacer (ej. ejecutar la acción real
-// vía un stub, o encadenar otro modal como confirmación de éxito).
 type ConfirmResultMsg struct {
 	Confirmed bool
 }
@@ -19,7 +15,7 @@ type Confirm struct {
 	ConfirmLabel string
 	CancelLabel  string
 
-	selected int // 0 = confirm, 1 = cancel
+	selected int
 	done     bool
 }
 

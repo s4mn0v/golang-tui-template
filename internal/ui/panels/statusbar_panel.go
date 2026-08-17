@@ -9,9 +9,6 @@ var statusbarStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color("245")).
 	Padding(0, 1)
 
-// StatusbarPanel es el ejemplo de referencia para todos los bloques
-// "Estructura": no implementan Focus real (Focusable() = false), así
-// el ciclo de foco (Tab/Shift+Tab) los salta automáticamente.
 type StatusbarPanel struct {
 	width int
 	text  string
@@ -24,9 +21,6 @@ func NewStatusbarPanel() Panel {
 func (p *StatusbarPanel) Init() tea.Cmd { return nil }
 
 func (p *StatusbarPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
-	// Sin estado propio que reaccione a mensajes por ahora.
-	// El dev puede escuchar un tea.Msg custom aquí (ej. StatusChangedMsg)
-	// para actualizar p.text desde internal/stubs.
 	return p, nil
 }
 

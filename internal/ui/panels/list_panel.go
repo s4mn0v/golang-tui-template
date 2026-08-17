@@ -5,9 +5,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// listItem implementa list.Item. En la app real, el dev reemplaza
-// esto por su propio tipo (ej. un registro de equipo, un archivo, etc.)
-// vía internal/stubs — este es solo el bloque estructural.
 type listItem string
 
 func (i listItem) FilterValue() string { return string(i) }
@@ -28,10 +25,6 @@ func NewListPanel() Panel {
 	}
 
 	delegate := list.NewDefaultDelegate()
-	// Sin esto, DefaultDelegate reserva una línea para descripción
-	// (aunque esté vacía) + 1 línea de espaciado entre ítems — con
-	// listItem.Description() = "" eso se traduce en huecos grandes
-	// entre cada fila sin ningún contenido real ahí.
 	delegate.ShowDescription = false
 	delegate.SetSpacing(0)
 
@@ -50,13 +43,6 @@ func (p *ListPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 	p.model, cmd = p.model.Update(msg)
 	return p, cmd
 }
-
-// func (p *ListPanel) View() string {
-// 	return borderStyleFor(p.focused).
-// 		Width(OuterStyleWidth(p.width)).
-// 		Height(OuterStyleHeight(p.height)).
-// 		Render(p.model.View())
-// }
 
 func (p *ListPanel) View() string {
 	return borderStyleFor(p.focused).

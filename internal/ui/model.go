@@ -11,11 +11,6 @@ import (
 	"tui-template/internal/ui/panels"
 )
 
-// Model es la raíz de la app. No conoce tipos concretos de panel —
-// solo la interface panels.Panel — así el patrón compuesto funciona:
-// cada panel maneja su propio Update(), y este Model solo intercepta
-// las teclas globales (cambiar foco, salir, abrir modal) antes de
-// delegar el resto al panel que tiene el foco actualmente.
 type Model struct {
 	panelList    []panels.Panel
 	focusedIndex int
@@ -23,16 +18,9 @@ type Model struct {
 	height       int
 	arrangement  Arrangement
 
-	// activeModal es nil cuando no hay overlay abierto. Mientras no
-	// sea nil, TODOS los mensajes van al modal — el body queda
-	// congelado detrás hasta que el usuario responda o cancele.
 	activeModal modals.Modal
 }
 
-// NewModel arma el esqueleto de prueba con 3 paneles: list (sidebar),
-// table (main), statusbar (footer, no-focusable). En la versión
-// generada, este slice se construye iterando los Panel del schema
-// y llamando panels.New(blockType) por cada uno.
 func NewModel() Model {
 	list, _ := panels.New(panels.BlockList)
 	table, _ := panels.New(panels.BlockTable)
@@ -68,8 +56,6 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// tea.WindowSizeMsg se procesa siempre, incluso con un modal
-	// activo, para que el layout de fondo no quede desactualizado.
 	if sizeMsg, ok := msg.(tea.WindowSizeMsg); ok {
 		m.width = sizeMsg.Width
 		m.height = sizeMsg.Height
@@ -77,16 +63,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Si el resultado de un Confirm llega y ya no hay modal activo
-	// (se cerró en el ciclo anterior), decidimos qué hacer con la
-	// respuesta acá — este es el punto donde, en la app real, se
-	// llamaría al stub correspondiente (ej. eliminar el equipo).
 	if result, ok := msg.(modals.ConfirmResultMsg); ok {
 		return m.handleConfirmResult(result)
 	}
 
-	// Con un modal activo, TODO lo demás se le delega a él — el
-	// resto del árbol (paneles, teclas globales) queda pausado.
 	if m.activeModal != nil {
 		return m.updateModal(msg)
 	}
@@ -108,7 +88,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// Todo lo demás se delega al panel con foco (patrón compuesto).
 	if m.focusedIndex >= 0 {
 		updated, cmd := m.panelList[m.focusedIndex].Update(msg)
 		m.panelList[m.focusedIndex] = updated
@@ -118,8 +97,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// updateModal envía el mensaje al modal activo y lo cierra si ya
-// terminó su ciclo (Done() == true).
 func (m Model) updateModal(msg tea.Msg) (tea.Model, tea.Cmd) {
 	updated, cmd := m.activeModal.Update(msg)
 	m.activeModal = updated
@@ -131,8 +108,6 @@ func (m Model) updateModal(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// openConfirmDemo simula la acción "action:openModal" de un Trigger
-// del schema (tecla "d" → abrir Confirm de eliminación).
 func (m Model) openConfirmDemo() (tea.Model, tea.Cmd) {
 	confirm := modals.NewConfirm(
 		"Confirmar acción",
@@ -154,10 +129,6 @@ func (m Model) openAlertDemo() (tea.Model, tea.Cmd) {
 	return m, alert.Init()
 }
 
-// handleConfirmResult es el punto de integración con internal/stubs
-// en la versión final: si Confirmed == true, aquí se llamaría al
-// CallStub real (ej. stubs.DeleteEquipo(id)) en vez de solo abrir
-// un alert de éxito como en este demo.
 func (m Model) handleConfirmResult(result modals.ConfirmResultMsg) (tea.Model, tea.Cmd) {
 	if !result.Confirmed {
 		return m, nil
@@ -203,10 +174,6 @@ func focusableIndices(ps []panels.Panel) []int {
 	return idx
 }
 
-// applyLayout delega el cálculo a computeLayout (layout.go), que
-// resuelve breakpoints y devuelve tamaños ya listos. Acá solo se
-// aplican a cada panel y se guarda el Arrangement para que View()
-// sepa si debe unir sidebar+main horizontal o apilado.
 func (m *Model) applyLayout() {
 	if len(m.panelList) < 3 {
 		return
@@ -257,10 +224,6 @@ func (m Model) View() string {
 	)
 }
 
-// renderCommandBar es la barra de comandos inferior "de guía" que
-// pediste: siempre visible, lista los bindings globales activos.
-// Cuando agreguemos triggers por panel, esto se extiende para mostrar
-// también los bindings específicos del panel con foco actual.
 func (m Model) renderCommandBar() string {
 	parts := make([]string, 0, len(Keys.ShortHelp()))
 	for _, b := range Keys.ShortHelp() {
