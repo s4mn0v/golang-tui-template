@@ -28,6 +28,7 @@ var (
 type TreePanel struct {
 	root          *treeNode
 	cursor        int
+	scrollOffset  int
 	focused       bool
 	width, height int
 }
@@ -103,14 +104,68 @@ func (p *TreePanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 		}
 	}
 
+	p.clampScroll()
+
 	return p, nil
+}
+
+// clampScroll keeps the cursor within the visible window and the window
+// within the flattened row list. Rows were previously rendered in full
+// regardless of the box's allocated height — like the paginator, lipgloss's
+// Height() only pads short content, it doesn't clip tall content, so an
+// expanded tree taller than its box overflowed past the bottom and pushed
+// everything below (including, once the frame no longer fit the terminal,
+// the very top border) out of view.
+func (p *TreePanel) clampScroll() {
+	rows := p.flatten()
+	maxVisible := ContentHeight(p.height)
+	if maxVisible < 1 {
+		maxVisible = 1
+	}
+
+	if p.cursor > len(rows)-1 {
+		p.cursor = len(rows) - 1
+	}
+	if p.cursor < 0 {
+		p.cursor = 0
+	}
+
+	if p.cursor < p.scrollOffset {
+		p.scrollOffset = p.cursor
+	}
+	if p.cursor >= p.scrollOffset+maxVisible {
+		p.scrollOffset = p.cursor - maxVisible + 1
+	}
+
+	maxOffset := len(rows) - maxVisible
+	if maxOffset < 0 {
+		maxOffset = 0
+	}
+	if p.scrollOffset > maxOffset {
+		p.scrollOffset = maxOffset
+	}
+	if p.scrollOffset < 0 {
+		p.scrollOffset = 0
+	}
 }
 
 func (p *TreePanel) View() string {
 	rows := p.flatten()
 
+	maxVisible := ContentHeight(p.height)
+	if maxVisible < 1 {
+		maxVisible = 1
+	}
+	end := p.scrollOffset + maxVisible
+	if end > len(rows) {
+		end = len(rows)
+	}
+	visible := rows[p.scrollOffset:end]
+
 	var b strings.Builder
-	for i, row := range rows {
+	for i, row := range visible {
+		absoluteIdx := p.scrollOffset + i
+
 		prefix := strings.Repeat("  ", row.depth)
 
 		marker := "  "
@@ -123,25 +178,25 @@ func (p *TreePanel) View() string {
 		}
 
 		line := prefix + marker + row.node.label
-		if i == p.cursor {
+		if absoluteIdx == p.cursor {
 			line = treeCursorStyle.Render(line)
 		} else if len(row.node.children) == 0 {
 			line = treeDimStyle.Render(line)
 		}
 
 		b.WriteString(line)
-		if i < len(rows)-1 {
+		if i < len(visible)-1 {
 			b.WriteString("\n")
 		}
 	}
 
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(b.String())
+	return RenderBox(p.focused, p.width, p.height, b.String())
 }
 
-func (p *TreePanel) SetSize(w, h int) { p.width, p.height = w, h }
+func (p *TreePanel) SetSize(w, h int) {
+	p.width, p.height = w, h
+	p.clampScroll()
+}
 
 func (p *TreePanel) Focus()          { p.focused = true }
 func (p *TreePanel) Blur()           { p.focused = false }

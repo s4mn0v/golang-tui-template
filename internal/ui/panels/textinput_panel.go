@@ -30,10 +30,7 @@ func (p *TextinputPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 }
 
 func (p *TextinputPanel) View() string {
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(p.model.View())
+	return RenderBox(p.focused, p.width, p.height, p.model.View())
 }
 
 func (p *TextinputPanel) SetSize(w, h int) {
@@ -54,3 +51,7 @@ func (p *TextinputPanel) Blur() {
 func (p *TextinputPanel) Focused() bool   { return p.focused }
 func (p *TextinputPanel) Focusable() bool { return true }
 func (p *TextinputPanel) Title() string   { return "Textinput" }
+
+// CapturesText reports that, while focused, this panel consumes printable
+// keystrokes as text rather than as shortcuts.
+func (p *TextinputPanel) CapturesText() bool { return true }

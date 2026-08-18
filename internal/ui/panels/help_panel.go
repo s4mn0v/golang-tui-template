@@ -63,10 +63,7 @@ func (p *HelpPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 func (p *HelpPanel) View() string {
 	p.model.Width = ContentWidth(p.width)
 
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(p.model.View(p.keys))
+	return RenderBox(p.focused, p.width, p.height, p.model.View(p.keys))
 }
 
 func (p *HelpPanel) SetSize(w, h int) { p.width, p.height = w, h }

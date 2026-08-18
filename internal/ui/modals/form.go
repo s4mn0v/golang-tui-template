@@ -21,6 +21,8 @@ type Form struct {
 	vals []*string
 
 	done bool
+
+	width, height int
 }
 
 // NewForm builds a form modal from a set of (key, label) fields, each
@@ -85,6 +87,12 @@ func (f *Form) Update(msg tea.Msg) (Modal, tea.Cmd) {
 
 func (f *Form) Done() bool { return f.done }
 
+// SetSize records the screen size so View can clamp to it. The form's
+// fields are fixed at construction time (see NewForm), so this is just the
+// universal safety net (see ClampToScreen) rather than anything a form
+// needs to size itself against.
+func (f *Form) SetSize(width, height int) { f.width, f.height = width, height }
+
 func (f *Form) View() string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("62")).MarginBottom(1)
 
@@ -92,6 +100,7 @@ func (f *Form) View() string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
 		Padding(1, 2)
+	box = ClampToScreen(box, f.width, f.height)
 
 	return box.Render(titleStyle.Render(f.title) + "\n" + f.form.View())
 }

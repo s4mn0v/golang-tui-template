@@ -19,3 +19,12 @@ type Panel interface {
 
 	Title() string
 }
+
+// TextCapturing is implemented by panels that, while focused, consume
+// arbitrary printable keystrokes as text (single-line/multi-line inputs,
+// filterable lists, etc). A host app should check this before firing
+// single-key global shortcuts — such as a bare "q" to quit — so typing the
+// letter doesn't get swallowed by the shortcut instead of the field.
+type TextCapturing interface {
+	CapturesText() bool
+}

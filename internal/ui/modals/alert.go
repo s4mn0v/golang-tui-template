@@ -18,6 +18,8 @@ type Alert struct {
 	Message string
 	Variant AlertVariant
 	done    bool
+
+	width, height int
 }
 
 func NewAlert(title, message string, variant AlertVariant) *Alert {
@@ -38,6 +40,12 @@ func (a *Alert) Update(msg tea.Msg) (Modal, tea.Cmd) {
 
 func (a *Alert) Done() bool { return a.done }
 
+// SetSize records the screen size so View can clamp to it. An alert's
+// content (title, message, hint) is small and fixed, so this is just the
+// universal safety net (see ClampToScreen) rather than anything an alert
+// needs to size itself against.
+func (a *Alert) SetSize(width, height int) { a.width, a.height = width, height }
+
 func (a *Alert) View() string {
 	color := alertColor(a.Variant)
 
@@ -46,6 +54,7 @@ func (a *Alert) View() string {
 		BorderForeground(color).
 		Padding(1, 2).
 		Width(44)
+	box = ClampToScreen(box, a.width, a.height)
 
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(color)
 	hint := lipgloss.NewStyle().

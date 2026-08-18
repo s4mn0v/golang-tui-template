@@ -40,15 +40,30 @@ func (p *FilepickerPanel) View() string {
 		content += "\n\nselected: " + p.selectedPath
 	}
 
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(content)
+	return RenderBox(p.focused, p.width, p.height, content)
 }
 
 func (p *FilepickerPanel) SetSize(w, h int) {
 	p.width, p.height = w, h
-	p.model.SetHeight(ContentHeight(h))
+
+	// The picker pads its own View() out to one *more* than the height
+	// it's given (bubbles/filepicker's own convention), and View() below
+	// then appends the "selected: <path>" line after that — so without
+	// reserving room up front, that's always 3 rows more than the box
+	// actually has. RenderBox's scrollbar safety net keeps that from ever
+	// breaking a border, but there's no reason to make it earn its keep
+	// on every ordinary-sized terminal: reserve the space so the listing
+	// and the selection line actually fit together.
+	const (
+		pickerHeightQuirk = 1 // bubbles/filepicker pads to m.Height+1, not m.Height
+		selectedLines     = 2 // blank separator + the "selected: ..." line
+	)
+
+	pickerHeight := ContentHeight(h) - pickerHeightQuirk - selectedLines
+	if pickerHeight < 1 {
+		pickerHeight = 1
+	}
+	p.model.SetHeight(pickerHeight)
 }
 
 func (p *FilepickerPanel) Focus()          { p.focused = true }

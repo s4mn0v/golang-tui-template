@@ -39,10 +39,7 @@ func (p *ViewportPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 }
 
 func (p *ViewportPanel) View() string {
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(p.model.View())
+	return RenderBox(p.focused, p.width, p.height, p.model.View())
 }
 
 func (p *ViewportPanel) SetSize(w, h int) {

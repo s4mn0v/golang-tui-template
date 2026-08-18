@@ -55,6 +55,10 @@ func (p *ListPanel) Index() int { return p.model.Index() }
 // fuzzy filter (and therefore shouldn't have its keystrokes intercepted).
 func (p *ListPanel) Filtering() bool { return p.model.FilterState() == list.Filtering }
 
+// CapturesText reports that, while the fuzzy filter is being typed into, this
+// panel consumes printable keystrokes as text rather than as shortcuts.
+func (p *ListPanel) CapturesText() bool { return p.Filtering() }
+
 func (p *ListPanel) Init() tea.Cmd { return nil }
 
 func (p *ListPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
@@ -64,10 +68,7 @@ func (p *ListPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 }
 
 func (p *ListPanel) View() string {
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(p.model.View())
+	return RenderBox(p.focused, p.width, p.height, p.model.View())
 }
 
 func (p *ListPanel) SetSize(w, h int) {

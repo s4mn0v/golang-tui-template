@@ -29,10 +29,7 @@ func (p *TextareaPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 }
 
 func (p *TextareaPanel) View() string {
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(p.model.View())
+	return RenderBox(p.focused, p.width, p.height, p.model.View())
 }
 
 func (p *TextareaPanel) SetSize(w, h int) {
@@ -54,3 +51,7 @@ func (p *TextareaPanel) Blur() {
 func (p *TextareaPanel) Focused() bool   { return p.focused }
 func (p *TextareaPanel) Focusable() bool { return true }
 func (p *TextareaPanel) Title() string   { return "Textarea" }
+
+// CapturesText reports that, while focused, this panel consumes printable
+// keystrokes (including "q") as text rather than as shortcuts.
+func (p *TextareaPanel) CapturesText() bool { return true }

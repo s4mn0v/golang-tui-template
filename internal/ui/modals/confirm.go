@@ -17,6 +17,8 @@ type Confirm struct {
 
 	selected int
 	done     bool
+
+	width, height int
 }
 
 func NewConfirm(title, message, confirmLabel, cancelLabel string) *Confirm {
@@ -62,12 +64,19 @@ func (c *Confirm) Update(msg tea.Msg) (Modal, tea.Cmd) {
 
 func (c *Confirm) Done() bool { return c.done }
 
+// SetSize records the screen size so View can clamp to it. A confirm's
+// content (title, message, buttons) is small and fixed, so this is just the
+// universal safety net (see ClampToScreen) rather than anything a confirm
+// needs to size itself against.
+func (c *Confirm) SetSize(width, height int) { c.width, c.height = width, height }
+
 func (c *Confirm) View() string {
 	box := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("214")).
 		Padding(1, 2).
 		Width(44)
+	box = ClampToScreen(box, c.width, c.height)
 
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("214"))
 

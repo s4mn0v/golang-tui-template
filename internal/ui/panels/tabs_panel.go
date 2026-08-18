@@ -75,10 +75,7 @@ func (p *TabsPanel) View() string {
 
 	body := header + "\n" + strings.Repeat("─", ContentWidth(p.width)) + "\n\n" + content
 
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(body)
+	return RenderBox(p.focused, p.width, p.height, body)
 }
 
 func (p *TabsPanel) SetSize(w, h int) { p.width, p.height = w, h }

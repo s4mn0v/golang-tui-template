@@ -32,10 +32,7 @@ func (p *SpinnerPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 func (p *SpinnerPanel) View() string {
 	content := p.model.View() + " " + p.label
 
-	return borderStyleFor(false).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(content)
+	return RenderBox(false, p.width, p.height, content)
 }
 
 func (p *SpinnerPanel) SetSize(w, h int) { p.width, p.height = w, h }

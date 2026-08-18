@@ -25,10 +25,7 @@ func (p *CustomPanel) Update(msg tea.Msg) (Panel, tea.Cmd) { return p, nil }
 func (p *CustomPanel) View() string {
 	content := customPlaceholderStyle.Render("custom block — no component assigned")
 
-	return borderStyleFor(p.focused).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(content)
+	return RenderBox(p.focused, p.width, p.height, content)
 }
 
 func (p *CustomPanel) SetSize(w, h int) { p.width, p.height = w, h }

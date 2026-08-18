@@ -1,9 +1,11 @@
 package panels
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // TestBlockLifecycle exercises every registered block through the standard
@@ -44,6 +46,40 @@ func TestBlockLifecycle(t *testing.T) {
 
 			if p.Title() == "" {
 				t.Errorf("%s: Title() is empty", blockType)
+			}
+		})
+	}
+}
+
+// TestViewNeverExceedsAllocatedSize renders every registered block into a
+// deliberately small box and checks the result never has more lines than
+// the height it was given, nor a line wider than the width — regardless of
+// how much content the block itself wants to show. This is the guarantee
+// RenderBox (see style.go) exists to provide universally, instead of each
+// block having to size its own content exactly right; this test is what
+// keeps that guarantee from silently regressing for any block, present or
+// future.
+func TestViewNeverExceedsAllocatedSize(t *testing.T) {
+	const width, height = 22, 6
+
+	for _, blockType := range Registered() {
+		t.Run(string(blockType), func(t *testing.T) {
+			p, ok := New(blockType)
+			if !ok {
+				t.Fatalf("New(%s) returned ok=false", blockType)
+			}
+
+			p.Init()
+			p.SetSize(width, height)
+
+			lines := strings.Split(p.View(), "\n")
+			if len(lines) > height {
+				t.Errorf("%s: View() produced %d lines for height=%d", blockType, len(lines), height)
+			}
+			for i, line := range lines {
+				if w := lipgloss.Width(line); w > width {
+					t.Errorf("%s: line %d is %d cells wide for width=%d", blockType, i, w, width)
+				}
 			}
 		})
 	}

@@ -88,6 +88,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if sizeMsg, ok := msg.(tea.WindowSizeMsg); ok {
 		m.width, m.height = sizeMsg.Width, sizeMsg.Height
 		m.applyLayout()
+		if m.activeModal != nil {
+			m.activeModal.SetSize(m.width, m.height)
+		}
 		return m, nil
 	}
 
@@ -105,21 +108,51 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
-		switch {
-		case key.Matches(keyMsg, Keys.Quit):
-			return m, tea.Quit
-		case key.Matches(keyMsg, Keys.NextPanel), key.Matches(keyMsg, Keys.PrevPanel):
-			m.toggleFocus()
-			return m, nil
-		}
-
-		if !m.focusOnPreview {
-			return m.updateSidebar(keyMsg)
-		}
+		return m.updateKey(keyMsg)
 	}
 
-	if m.focusOnPreview && m.preview != nil {
+	// Anything that isn't a keystroke — a spinner/progress tick, a
+	// filepicker directory listing, a textarea cursor blink — always
+	// reaches whichever block is currently previewed, whether or not it
+	// has keyboard focus. Keyboard focus only decides who gets to *type*;
+	// a block that's just being looked at should still animate. This is
+	// also what makes the animation stop the instant you move on: once a
+	// different panel replaces it as the preview, its self-rescheduling
+	// tick has nowhere left to go and the chain simply ends.
+	if m.preview != nil {
 		updated, cmd := m.preview.Update(msg)
+		m.preview = updated
+		return m, cmd
+	}
+
+	return m, nil
+}
+
+// updateKey handles a keystroke: global shortcuts first, then routes to
+// whichever of the sidebar/preview currently has keyboard focus.
+func (m Model) updateKey(keyMsg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if key.Matches(keyMsg, Keys.ForceQuit) {
+		return m, tea.Quit
+	}
+
+	// A bare "q" only quits when nothing is capturing text: not while
+	// the sidebar's fuzzy filter (or a focused text field in the
+	// preview) is where the keystroke actually belongs.
+	if key.Matches(keyMsg, Keys.Quit) && !m.capturingText() {
+		return m, tea.Quit
+	}
+
+	if key.Matches(keyMsg, Keys.NextPanel) || key.Matches(keyMsg, Keys.PrevPanel) {
+		m.toggleFocus()
+		return m, nil
+	}
+
+	if !m.focusOnPreview {
+		return m.updateSidebar(keyMsg)
+	}
+
+	if m.preview != nil {
+		updated, cmd := m.preview.Update(keyMsg)
 		m.preview = updated
 		return m, cmd
 	}
@@ -141,9 +174,27 @@ func (m Model) updateSidebar(keyMsg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if idx := m.sidebar.Index(); idx != m.selectedIdx {
 		m.selectedIdx = idx
 		m.setPreview(idx)
+		if m.preview != nil {
+			cmd = tea.Batch(cmd, m.preview.Init())
+		}
 	}
 
 	return m, cmd
+}
+
+// capturingText reports whether the currently focused widget — the sidebar's
+// fuzzy filter, or a text-entry preview block — is consuming printable
+// keystrokes as text. Single-key global shortcuts (a bare "q" to quit) are
+// suppressed while this is true so typing isn't swallowed by them.
+func (m Model) capturingText() bool {
+	if m.focusOnPreview {
+		if m.preview == nil {
+			return false
+		}
+		tc, ok := m.preview.(panels.TextCapturing)
+		return ok && tc.CapturesText()
+	}
+	return m.sidebar.CapturesText()
 }
 
 // activateSelection opens the highlighted catalog entry: a modal is shown as
@@ -154,6 +205,7 @@ func (m Model) activateSelection() (tea.Model, tea.Cmd) {
 
 	if entry.kind == catalogModal {
 		modal, _ := modals.New(entry.modalType)
+		modal.SetSize(m.width, m.height)
 		m.activeModal = modal
 		return m, modal.Init()
 	}

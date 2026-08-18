@@ -49,10 +49,7 @@ func (p *ProgressPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
 }
 
 func (p *ProgressPanel) View() string {
-	return borderStyleFor(false).
-		Width(OuterStyleWidth(p.width)).
-		Height(OuterStyleHeight(p.height)).
-		Render(p.model.View())
+	return RenderBox(false, p.width, p.height, p.model.View())
 }
 
 func (p *ProgressPanel) SetSize(w, h int) {

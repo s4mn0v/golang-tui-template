@@ -8,6 +8,7 @@ type KeyMap struct {
 	Activate  key.Binding
 	Filter    key.Binding
 	Quit      key.Binding
+	ForceQuit key.Binding
 }
 
 var Keys = KeyMap{
@@ -27,9 +28,15 @@ var Keys = KeyMap{
 		key.WithKeys("/"),
 		key.WithHelp("/", "filter blocks"),
 	),
+	// Quit only fires outside of text entry/filtering — see
+	// Model.capturingText — so a bare "q" types normally when the user is
+	// typing somewhere. ForceQuit always works as an escape hatch.
 	Quit: key.NewBinding(
-		key.WithKeys("q", "ctrl+c"),
+		key.WithKeys("q"),
 		key.WithHelp("q", "quit"),
+	),
+	ForceQuit: key.NewBinding(
+		key.WithKeys("ctrl+c"),
 	),
 }
 
