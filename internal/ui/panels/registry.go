@@ -30,7 +30,24 @@ type Constructor func() Panel
 var registry = map[BlockType]Constructor{
 	BlockList:      NewListPanel,
 	BlockTable:     NewTablePanel,
+	BlockViewport:  NewViewportPanel,
+	BlockPaginator: NewPaginatorPanel,
+
+	BlockTextinput:  NewTextinputPanel,
+	BlockTextarea:   NewTextareaPanel,
+	BlockFilepicker: NewFilepickerPanel,
+
+	BlockSpinner:  NewSpinnerPanel,
+	BlockProgress: NewProgressPanel,
+	BlockHelp:     NewHelpPanel,
+	BlockKey:      NewKeyPanel,
+
 	BlockStatusbar: NewStatusbarPanel,
+	BlockTitlebar:  NewTitlebarPanel,
+	BlockTabs:      NewTabsPanel,
+	BlockTree:      NewTreePanel,
+
+	BlockCustom: NewCustomPanel,
 }
 
 func New(blockType BlockType) (Panel, bool) {

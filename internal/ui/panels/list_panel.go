@@ -19,9 +19,9 @@ type ListPanel struct {
 
 func NewListPanel() Panel {
 	items := []list.Item{
-		listItem("equipo-compresor-a"),
-		listItem("equipo-bomba-b"),
-		listItem("equipo-motor-c"),
+		listItem("compressor-a"),
+		listItem("pump-b"),
+		listItem("motor-c"),
 	}
 
 	delegate := list.NewDefaultDelegate()
@@ -29,12 +29,31 @@ func NewListPanel() Panel {
 	delegate.SetSpacing(0)
 
 	m := list.New(items, delegate, 0, 0)
-	m.Title = "Sidebar"
+	m.Title = "List"
 	m.SetShowStatusBar(false)
 	m.SetShowHelp(false)
 
 	return &ListPanel{model: m}
 }
+
+// SetItems replaces the list's items.
+func (p *ListPanel) SetItems(items []string) {
+	listItems := make([]list.Item, len(items))
+	for i, item := range items {
+		listItems[i] = listItem(item)
+	}
+	p.model.SetItems(listItems)
+}
+
+// SetTitle changes the heading shown above the list.
+func (p *ListPanel) SetTitle(title string) { p.model.Title = title }
+
+// Index returns the cursor position of the currently highlighted item.
+func (p *ListPanel) Index() int { return p.model.Index() }
+
+// Filtering reports whether the list is currently capturing text for its
+// fuzzy filter (and therefore shouldn't have its keystrokes intercepted).
+func (p *ListPanel) Filtering() bool { return p.model.FilterState() == list.Filtering }
 
 func (p *ListPanel) Init() tea.Cmd { return nil }
 
@@ -52,10 +71,7 @@ func (p *ListPanel) View() string {
 }
 
 func (p *ListPanel) SetSize(w, h int) {
-	topOffset := h / 1050
-
-	p.width = w
-	p.height = h - topOffset
+	p.width, p.height = w, h
 
 	p.model.SetSize(
 		ContentWidth(w),
@@ -67,4 +83,4 @@ func (p *ListPanel) Focus()          { p.focused = true }
 func (p *ListPanel) Blur()           { p.focused = false }
 func (p *ListPanel) Focused() bool   { return p.focused }
 func (p *ListPanel) Focusable() bool { return true }
-func (p *ListPanel) Title() string   { return "Sidebar (list)" }
+func (p *ListPanel) Title() string   { return "List" }

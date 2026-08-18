@@ -9,6 +9,7 @@ const (
 const (
 	sidebarMinWidth  = 20
 	sidebarFixedWide = 32
+	titlebarHeight   = 1
 	statusHeight     = 1
 	commandBarHeight = 1
 )
@@ -23,21 +24,35 @@ const (
 type LayoutResult struct {
 	Arrangement Arrangement
 
+	TitlebarW int
+
 	SidebarW, SidebarH int
 	MainW, MainH       int
 	StatusW            int
 }
 
+// computeLayout reserves one full-width row at the very top for the title
+// bar and one at the bottom for both the status bar and the command bar,
+// before splitting whatever vertical space remains between the sidebar and
+// the main panel. Reserving the title bar row keeps the panels' top border
+// from ever landing on row 0: without it, a body one row taller than the
+// terminal (an off-by-one during a resize) scrolls the top border out of
+// view with no room to recover.
 func computeLayout(width, height int) LayoutResult {
-	bodyHeight := height - statusHeight - commandBarHeight
+	bodyHeight := height - titlebarHeight - statusHeight - commandBarHeight
 	if bodyHeight < 0 {
 		bodyHeight = 0
 	}
 
+	var result LayoutResult
 	if width < BreakpointNarrow {
-		return computeStackedLayout(width, bodyHeight)
+		result = computeStackedLayout(width, bodyHeight)
+	} else {
+		result = computeHorizontalLayout(width, bodyHeight)
 	}
-	return computeHorizontalLayout(width, bodyHeight)
+
+	result.TitlebarW = width
+	return result
 }
 
 func computeStackedLayout(width, bodyHeight int) LayoutResult {

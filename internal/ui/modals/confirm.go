@@ -21,7 +21,7 @@ type Confirm struct {
 
 func NewConfirm(title, message, confirmLabel, cancelLabel string) *Confirm {
 	if confirmLabel == "" {
-		confirmLabel = "Sí"
+		confirmLabel = "Yes"
 	}
 	if cancelLabel == "" {
 		cancelLabel = "No"

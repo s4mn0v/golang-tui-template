@@ -15,8 +15,11 @@ type StatusbarPanel struct {
 }
 
 func NewStatusbarPanel() Panel {
-	return &StatusbarPanel{text: "listo"}
+	return &StatusbarPanel{text: "ready"}
 }
+
+// SetText changes the message shown in the status bar.
+func (p *StatusbarPanel) SetText(text string) { p.text = text }
 
 func (p *StatusbarPanel) Init() tea.Cmd { return nil }
 

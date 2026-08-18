@@ -50,7 +50,7 @@ func (a *Alert) View() string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(color)
 	hint := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
-		Render("enter / esc para cerrar")
+		Render("enter / esc to close")
 
 	content := titleStyle.Render(a.Title) + "\n\n" + a.Message + "\n\n" + hint
 	return box.Render(content)

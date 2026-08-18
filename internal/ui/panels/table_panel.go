@@ -14,13 +14,13 @@ type TablePanel struct {
 func NewTablePanel() Panel {
 	columns := []table.Column{
 		{Title: "ID", Width: 6},
-		{Title: "Nombre", Width: 22},
-		{Title: "Estado", Width: 14},
+		{Title: "Name", Width: 22},
+		{Title: "Status", Width: 14},
 	}
 	rows := []table.Row{
-		{"1", "compresor-a", "activo"},
-		{"2", "bomba-b", "mantenimiento"},
-		{"3", "motor-c", "inactivo"},
+		{"1", "compressor-a", "active"},
+		{"2", "pump-b", "maintenance"},
+		{"3", "motor-c", "inactive"},
 	}
 
 	m := table.New(
@@ -65,4 +65,4 @@ func (p *TablePanel) Blur() {
 
 func (p *TablePanel) Focused() bool   { return p.focused }
 func (p *TablePanel) Focusable() bool { return true }
-func (p *TablePanel) Title() string   { return "Main (table)" }
+func (p *TablePanel) Title() string   { return "Table" }

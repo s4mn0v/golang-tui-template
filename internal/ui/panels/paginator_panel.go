@@ -1,0 +1,80 @@
+package panels
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/bubbles/paginator"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+// PaginatorPanel demos a pagination indicator/control over a set of items.
+type PaginatorPanel struct {
+	model         paginator.Model
+	items         []string
+	focused       bool
+	width, height int
+}
+
+func NewPaginatorPanel() Panel {
+	items := make([]string, 0, 42)
+	for i := 1; i <= 42; i++ {
+		items = append(items, fmt.Sprintf("item %02d", i))
+	}
+
+	m := paginator.New()
+	m.Type = paginator.Dots
+	m.PerPage = 7
+	m.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.Color("62")).Render("●")
+	m.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("○")
+	m.SetTotalPages(len(items))
+
+	return &PaginatorPanel{model: m, items: items}
+}
+
+func (p *PaginatorPanel) Init() tea.Cmd { return nil }
+
+func (p *PaginatorPanel) Update(msg tea.Msg) (Panel, tea.Cmd) {
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch keyMsg.String() {
+		case "left", "h":
+			p.model.PrevPage()
+			return p, nil
+		case "right", "l":
+			p.model.NextPage()
+			return p, nil
+		}
+	}
+
+	var cmd tea.Cmd
+	p.model, cmd = p.model.Update(msg)
+	return p, cmd
+}
+
+func (p *PaginatorPanel) View() string {
+	start, end := p.model.GetSliceBounds(len(p.items))
+
+	var b strings.Builder
+	for _, item := range p.items[start:end] {
+		b.WriteString(item)
+		b.WriteString("\n")
+	}
+	b.WriteString("\n")
+	b.WriteString(p.model.View())
+
+	return borderStyleFor(p.focused).
+		Width(OuterStyleWidth(p.width)).
+		Height(OuterStyleHeight(p.height)).
+		Render(b.String())
+}
+
+func (p *PaginatorPanel) SetSize(w, h int) {
+	p.width, p.height = w, h
+}
+
+func (p *PaginatorPanel) Focus()          { p.focused = true }
+func (p *PaginatorPanel) Blur()           { p.focused = false }
+func (p *PaginatorPanel) Focused() bool   { return p.focused }
+func (p *PaginatorPanel) Focusable() bool { return true }
+func (p *PaginatorPanel) Title() string   { return "Paginator" }
